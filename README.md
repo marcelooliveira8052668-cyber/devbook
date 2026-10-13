@@ -157,6 +157,50 @@ Para proteção de verdade, o conteúdo não pode estar num repositório públic
 
 ---
 
+## ⚖️ Página legal
+
+`legal.html` reúne os Termos de Uso e a Política de Privacidade (LGPD), com os
+requisitos que o Código de Defesa do Consumidor e a LGPD exigem:
+
+- Identificação do fornecedor (nome, **CPF**, endereço, e-mail)
+- Preço, formas de pagamento e parcelamento
+- Entrega e acesso
+- **Garantia de 7 dias** (CDC, art. 49)
+- Obrigações do comprador e propriedade intelectual
+- Limitação de responsabilidade
+- Foro (domicílio do consumidor — CDC, art. 101, I)
+- Política de privacidade com tabela de dados, base legal, prazo e compartilhamentos
+- Direitos do titular (LGPD, art. 18) e contato com a ANPD
+
+### ⚠️ Antes de divulgar o link
+
+Preencha em `legal.html` os campos marcados em amarelo:
+
+| Campo | Onde |
+|---|---|
+| Nome completo | seção 1 e rodapé |
+| **CPF** | seção 1 e seção 11 |
+| Endereço profissional | seção 1 |
+| E-mail de contato | várias seções |
+| Plataforma de pagamento | seção 11.3 |
+| Plataforma de e-mail | seção 11.3 |
+| Data da última atualização | topo do documento |
+
+A página tem um aviso amarelo no topo enquanto houver placeholders, e `npm test`
+imprime um lembrete na saída. Um teste também valida os dígitos verificadores do
+CPF informado — se digitar errado, o teste falha.
+
+### CP com CPF (sem CNPJ)
+
+Você **pode** vender como pessoa física, sem CNPJ. As plataformas de checkout
+(Hotmart, Kiwify, Mercado Pago) emitem a nota fiscal no seu CPF. A única
+obrigação que sobra é declarar a receita no IRPF e, se passar do limite de
+isenção, pagar o Carnê Web (DASN-Simples Nacional). Fale com um contador sobre a
+sua estratégia — as regras mudam e a página legal não substitui parecer
+profissional.
+
+---
+
 ## 💰 Vendendo o curso
 
 A landing page está pronta em `landing.html`. **Antes de publicar, defina:**

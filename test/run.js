@@ -1113,11 +1113,18 @@ async function runAll() {
 
     it("landing e capa entram no precache do sw.js", () => {
       const sw = read("sw.js");
-      ["./landing.html", "./css/landing.css", "./assets/og-cover.svg"]
+      ["./landing.html", "./legal.html", "./css/landing.css", "./css/legal.css", "./assets/og-cover.svg"]
         .forEach(f => {
           assert.ok(sw.includes('"' + f + '"'),
-            `sw.js não referencia ${f} — a landing ficaria indisponível offline`);
+            `sw.js não referencia ${f} — a página ficaria indisponível offline`);
         });
+    });
+
+    it("a landing e o curso apontam para a página legal", () => {
+      assert.ok(read("landing.html").includes('href="legal.html"'),
+        "a landing não tem link para os termos");
+      assert.ok(read("index.html").includes('href="legal.html"'),
+        "o curso não tem link para os termos");
     });
 
     it("nenhum arquivo referencia os caminhos antigos", () => {
@@ -1305,6 +1312,106 @@ async function runAll() {
       const app = read("js/modules/app.js");
       /* isChapterFree precisa existir para a aula grátis continuar acessível */
       assert.ok(app.includes("Gate.release()"), "app.js não libera a tela após desbloquear");
+    });
+  });
+
+  /* ─── PÁGINA LEGAL ─── */
+  describe("⚖️ Página legal", () => {
+    const lg = read("legal.html");
+
+    it("existe e tem as duas partes do documento", () => {
+      assert.ok(lg.length > 15000, "legal.html parece incompleta");
+      assert.ok(lg.includes("Termos de Uso"), "falta Termos de Uso");
+      assert.ok(lg.includes("Política de Privacidade"), "falta Política de Privacidade");
+      assert.ok(lg.includes('id="identificacao"'), "falta seção de identificação");
+      assert.ok(lg.includes('id="garantia"'), "falta seção de garantia");
+      assert.ok(lg.includes('id="privacidade"'), "falta seção de privacidade");
+      assert.ok(lg.includes('id="direitos"'), "falta seção de direitos (art. 18 LGPD)");
+    });
+
+    it("carrega o CSS e as fontes", () => {
+      assert.ok(lg.includes('href="css/legal.css"'), "falta o CSS da página legal");
+      assert.ok(lg.includes('href="css/styles.css"'), "falta o design system");
+      assert.ok(require("fs").existsSync(path.join(ROOT, "css/legal.css")),
+        "css/legal.css não existe no disco");
+    });
+
+    it("cita as bases legais obrigatórias", () => {
+      assert.ok(/8\.078/.test(lg), "não cita o Código de Defesa do Consumidor");
+      assert.ok(/13\.709/.test(lg), "não cita a LGPD");
+      assert.ok(/9\.610/.test(lg), "não cita a Lei de Direitos Autorais");
+      assert.ok(/art\.?\s*49/i.test(lg), "não cita o art. 49 (garantia de 7 dias)");
+      assert.ok(/art\.?\s*18/i.test(lg), "não cita o art. 18 (direitos do titular)");
+    });
+
+    it("explica a situação de pessoa física (CPF)", () => {
+      assert.ok(/pessoa física/i.test(lg), "não menciona venda como pessoa física");
+      assert.ok(/Carnê Web/i.test(lg), "não menciona Carnê Web / DAS");
+      assert.ok(/IRPF/.test(lg), "não menciona a obrigação de declarar no IRPF");
+      assert.ok(/contador/i.test(lg), "não recomenda consultar um contador");
+    });
+
+    it("informa que não usa cookies de rastreamento", () => {
+      assert.ok(/não usa cookies de rastreamento/i.test(lg),
+        "a política deve declarar a ausência de tracking");
+      assert.ok(/localStorage/.test(lg),
+        "a política deve explicar que o progresso fica no navegador");
+    });
+
+    it("tem os dados do fornecedor preenchidos", () => {
+      const cpf = lg.match(/(\d{3})\.(\d{3})\.(\d{3})-(\d{2})/);
+      assert.ok(cpf, "CPF do fornecedor não encontrado na página");
+      /* valida os dígitos verificadores do CPF informado */
+      const digitos = cpf[0].replace(/\D/g, "");
+      const calc = base => {
+        let s = 0;
+        for (let i = 0; i < base.length; i++) s += Number(base[i]) * (base.length + 1 - i);
+        const r = (s * 10) % 11;
+        return r >= 10 ? 0 : r;
+      };
+      assert.strictEqual(calc(digitos.slice(0, 9)), Number(digitos[9]),
+        "dígito verificador 1 do CPF está errado");
+      assert.strictEqual(calc(digitos.slice(0, 10)), Number(digitos[10]),
+        "dígito verificador 2 do CPF está errado");
+    });
+
+    it("avisa quais dados do dono ainda faltam (não trava o build)", () => {
+      /* Estes dados são pessoais e só o dono do curso pode fornecer.
+         Não quebramos o build por isso — emitimos um aviso para que
+         ele preencha antes de divulgar o link. */
+      const pendentes = [];
+      if (/SEU NOME COMPLETO/.test(lg)) pendentes.push("nome completo");
+      if (/seu@email\.com/.test(lg)) pendentes.push("e-mail de contato");
+      if (/SEU ENDEREÇO/.test(lg)) pendentes.push("endereço profissional");
+      if (/000\.000\.000-00/.test(lg)) pendentes.push("CPF");
+
+      if (pendentes.length) {
+        console.log(
+          `\n  \x1b[33m⚠ AVISO: legal.html com placeholders → ${pendentes.join(", ")}\x1b[0m` +
+          `\n    Preencha em legal.html antes de divulgar o link de venda.\n`
+        );
+      } else {
+        console.log("\n  \x1b[32m✓ legal.html com todos os dados do fornecedor preenchidos\x1b[0m\n");
+      }
+    });
+
+    it("não contém caracteres de outro alfabeto", () => {
+      const m = lg.match(/[　-ヿ一-鿿가-힯Ѐ-ӿ]/);
+      assert.ok(!m, `caractere não-latino em legal.html: "${m ? m[0] : ""}"`);
+    });
+
+    it("não tem palavras misturadas de outros idiomas (erro de digitação)", () => {
+      /* pega erro comum de digitação: word PT colada com word EN/CN */
+      const padroes = [
+        /[a-zà-ú]+-(?:selling|review|project|suggested|check)\b/i,
+        /\b(?:are|was|with|from|your|the)\s+(?:seu|você|seu)\b/i,
+        /\b[a-zà-ú]+\s+[一-鿿]/,
+        /\b[一-鿿]+\s*[a-zà-ú]+\b/
+      ];
+      padroes.forEach(re => {
+        const m = lg.match(re);
+        assert.ok(!m, `texto com palavra misturada: "${m ? m[0].trim() : ""}"`);
+      });
     });
   });
 

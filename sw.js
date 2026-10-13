@@ -40,7 +40,9 @@ const ASSETS = [
    dependem de configuração do dono. Ficam só no cache de runtime. */
 const RUNTIME_ONLY = [
   "./landing.html",
+  "./legal.html",
   "./css/landing.css",
+  "./css/legal.css",
   "./assets/og-cover.svg"
 ];
 
