@@ -15,7 +15,14 @@ const Progress = (() => {
     streak: 0,
     lastStudy: null,         // "YYYY-MM-DD"
     badges: [],              // ids ganhos
-    seenFlashcards: {}       // fila de revisão espaçada { idx: { due, box } }
+    seenFlashcards: {},      // fila de revisão espaçada { idx: { due, box } }
+    /* ── sistemas novos (v2.0) ── */
+    projectsDone: [],        // ids de projetos concluídos
+    challengesDone: [],      // ids de desafios concluídos
+    certificates: 0,         // certificados gerados
+    streakBest: 0,           // melhor sequência
+    studyLog: {},            // { "YYYY-MM-DD": minutos }
+    trackProgress: {}        // { trackId: { chaptersDone, projectsDone, startedAt } }
   });
 
   let state;
@@ -41,7 +48,19 @@ const Progress = (() => {
     const yesterday = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
     state.streak = (state.lastStudy === yesterday) ? state.streak + 1 : 1;
     state.lastStudy = t;
+    if (state.streak > state.streakBest) state.streakBest = state.streak;
     save();
+  }
+
+  /* ─── Registro de minutos de estudo (heatmap) ─── */
+  function logStudy(minutes) {
+    const t = today();
+    state.studyLog[t] = (state.studyLog[t] || 0) + minutes;
+    save();
+  }
+
+  function totalStudyMinutes() {
+    return Object.values(state.studyLog).reduce((s, m) => s + m, 0);
   }
 
   /* ─── XP e níveis ─── */
@@ -93,9 +112,10 @@ const Progress = (() => {
   /* ─── Capítulos ─── */
   function isDone(id) { return state.chaptersDone.includes(id); }
 
-  function completeChapter(id) {
+  function completeChapter(id, minutes) {
     if (isDone(id)) return false;
     state.chaptersDone.push(id);
+    if (minutes) logStudy(minutes);
     save();
     addXP(50, "capítulo concluído");
     return true;
@@ -157,9 +177,13 @@ const Progress = (() => {
     const snapshot = {
       xp: state.xp,
       chaptersDone: state.chaptersDone.length,
-      streak: state.streak,
+      streak: Math.max(state.streak, state.streakBest),
       perfectQuizzes: state.perfectQuizzes,
-      flashReviews: state.flashReviews
+      flashReviews: state.flashReviews,
+      challengesDone: state.challengesDone.length,
+      projectsDone: state.projectsDone.length,
+      certificates: state.certificates,
+      trackFullstack: trackComplete("fullstack")
     };
     BADGES.forEach(b => {
       if (!state.badges.includes(b.id) && b.check(snapshot)) {
@@ -168,6 +192,97 @@ const Progress = (() => {
         toast(`🏅 Conquista desbloqueada: ${b.name}!`, "success");
       }
     });
+  }
+
+  /* ─── PROJETOS INTEGRADORES ─── */
+  function isProjectDone(id) { return state.projectsDone.includes(id); }
+
+  function toggleProject(id) {
+    const proj = (typeof PROJECTS !== "undefined") ? PROJECTS.find(p => p.id === id) : null;
+    if (!proj) return false;
+    if (state.projectsDone.includes(id)) {
+      state.projectsDone = state.projectsDone.filter(x => x !== id);
+      save(); renderProfile(); return false;
+    }
+    state.projectsDone.push(id);
+    save();
+    addXP(120, `projeto: ${proj.name}`);
+    renderProfile();
+    return true;
+  }
+
+  /* ─── DESAFIOS DE CÓDIGO ─── */
+  function isChallengeDone(id) { return state.challengesDone.includes(id); }
+
+  function completeChallenge(id) {
+    if (state.challengesDone.includes(id)) return false;
+    const ch = (typeof CHALLENGES !== "undefined") ? CHALLENGES.find(c => c.id === id) : null;
+    state.challengesDone.push(id);
+    save();
+    addXP(ch ? ch.xp : 50, `desafio: ${ch ? ch.title : id}`);
+    renderProfile();
+    return true;
+  }
+
+  /* ─── TRILHAS ─── */
+  function trackStats(trackId) {
+    const t = (typeof TRACKS !== "undefined") ? TRACKS.find(x => x.id === trackId) : null;
+    if (!t) return { pct: 0, chaptersDone: 0, chaptersTotal: 0, projectsDone: 0, projectsTotal: 0, complete: false };
+    const chDone = t.chapters.filter(id => state.chaptersDone.includes(id)).length;
+    const prDone = (t.projects || []).filter(id => state.projectsDone.includes(id)).length;
+    const chTotal = t.chapters.length;
+    const prTotal = (t.projects || []).length;
+    /* progresso = 80% capítulos + 20% projetos */
+    const pct = chTotal + prTotal > 0
+      ? Math.round(((chDone / chTotal) * 80) + ((prTotal ? (prDone / prTotal) * 20 : 0)))
+      : 0;
+    return {
+      pct: Math.min(100, pct),
+      chaptersDone: chDone, chaptersTotal: chTotal,
+      projectsDone: prDone, projectsTotal: prTotal,
+      complete: chDone === chTotal && prDone === prTotal
+    };
+  }
+
+  function trackComplete(trackId) {
+    const s = trackStats(trackId);
+    return s.complete;
+  }
+
+  function trackDetail(trackId) {
+    const s = trackStats(trackId);
+    return {
+      chaptersDone: s.chaptersDone, chaptersTotal: s.chaptersTotal,
+      projectsDone: s.projectsDone, projectsTotal: s.projectsTotal,
+      pct: s.pct
+    };
+  }
+
+  /* ─── CERTIFICADO ─── */
+  function certificateStatus() {
+    const cfg = (typeof CERTIFICATE !== "undefined") ? CERTIFICATE : { requirements: {} };
+    const req = cfg.requirements || {};
+    const quizzesAnswered = Object.keys(state.quizzes).length;
+    const checks = [
+      { id: "chapters", label: "Capítulos concluídos", got: state.chaptersDone.length, need: req.chapters || 0, unit: "" },
+      { id: "quizzes",  label: "Quizzes respondidos",  got: quizzesAnswered,           need: req.quizzes || 0,  unit: "" },
+      { id: "projects", label: "Projetos entregues",   got: state.projectsDone.length,  need: req.projects || 0, unit: "" },
+      { id: "challenges", label: "Desafios resolvidos", got: state.challengesDone.length, need: req.challenges || 0, unit: "" },
+      { id: "xp",       label: "XP acumulado",         got: state.xp,                   need: req.xp || 0,       unit: " XP" }
+    ];
+    const eligible = checks.every(c => c.got >= c.need);
+    return { eligible, checks };
+  }
+
+  function issueCertificate() {
+    const st = certificateStatus();
+    if (!st.eligible) return false;
+    state.certificates += 1;
+    save();
+    checkBadges();
+    toast("📜 Certificado emitido com sucesso!", "success");
+    renderProfile();
+    return true;
   }
 
   /* ─── Reset ─── */
@@ -194,6 +309,10 @@ const Progress = (() => {
 
     const avatar = document.getElementById("avatarEl");
     if (avatar) avatar.textContent = lv.n >= 8 ? "🧑‍🚀" : lv.n >= 5 ? "🧑‍💻" : "🌱";
+
+    /* números extras (opcionais na UI) */
+    set("challengesDoneEl", state.challengesDone.length);
+    set("projectsDoneEl", state.projectsDone.length);
   }
 
   load();
@@ -205,8 +324,16 @@ const Progress = (() => {
     saveQuiz, quizzes: () => state.quizzes,
     flashDue, reviewFlash,
     checkBadges, reset, renderProfile,
+    /* novos */
+    logStudy, totalStudyMinutes,
+    isProjectDone, toggleProject,
+    isChallengeDone, completeChallenge,
+    trackStats, trackComplete, trackDetail,
+    certificateStatus, issueCertificate,
     get doneCount() { return state.chaptersDone.length; },
-    get totalXP() { return state.xp; }
+    get totalXP() { return state.xp; },
+    get challengesDoneCount() { return state.challengesDone.length; },
+    get projectsDoneCount() { return state.projectsDone.length; }
   };
 })();
 

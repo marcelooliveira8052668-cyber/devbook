@@ -1,13 +1,13 @@
 {
-  "name": "DevBook — Livro Didático de Programação",
+  "name": "DevBook — Curso Full Stack do Zero ao Deploy",
   "short_name": "DevBook",
-  "description": "Livro didático interativo de programação Full Stack: HTML, CSS, JavaScript, React, Node.js e SQL.",
+  "description": "Curso interativo de programação Full Stack: HTML, CSS, JavaScript, React, Next.js, Node.js, SQL, TypeScript, testes e Docker — com desafios validados automaticamente, projetos integradores e certificado.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait-primary",
-  "background_color": "#0b1220",
-  "theme_color": "#0b1220",
+  "orientation": "any",
+  "background_color": "#f6f7f9",
+  "theme_color": "#3d4557",
   "lang": "pt-BR",
   "categories": ["education", "developer"],
   "icons": [

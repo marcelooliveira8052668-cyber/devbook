@@ -1,50 +1,263 @@
-# 📚 DevBook — Livro Didático de Programação
+# 📚 DevBook — Curso Full Stack do Zero ao Deploy
 
-Plataforma de estudos **Full Stack** para iniciantes absolutos — do zero ao deploy — feita com **HTML, CSS e JavaScript puros** (zero frameworks, zero build). Funciona offline como PWA.
+Plataforma de ensino **Full Stack** para quem quer virar desenvolvedor — do zero absoluto ao primeiro deploy. Feita com **HTML, CSS e JavaScript puros**: zero frameworks, zero build, **zero dependências**. Funciona offline como PWA.
 
-## 🎯 Recursos
+- **Aula do curso** → [`index.html`](index.html) (ou `npm start`)
+- **Landing page de vendas** → [`landing.html`](landing.html)
 
-- **11 capítulos** em 5 partes: HTML · CSS · JavaScript · JS Assíncrono · Git/GitHub · React · Hooks · Node.js/Express · SQL · TypeScript · Deploy
-- **Code Playground** integrado — editor com `Tab` e `Ctrl+Enter`, preview ao vivo em iframe sandboxado e console capturado (`console.log/error` + erros globais)
-- **Quiz por capítulo** — feedback explicativo e XP por acerto (15 XP cada)
-- **Flashcards com repetição espaçada** — algoritmo de caixas de Leitner (1-2-4-8-15 dias), avaliação por clique ou teclado (`Espaço` revela, `1-4` avalia)
-- **Gamificação** — XP, 10 níveis (Iniciante → Mestre do Código), 9 conquistas, sequência diária (streak 🔥)
-- **Progresso salvo** em `localStorage` — capítulos concluídos, quizzes e revisões
-- **Busca** no sumário, **tema claro/escuro** (`T`), atalhos de teclado (`F` = revisar, `Esc` = fechar)
-- **PWA offline** — service worker com cache dos assets, instalável pelo navegador
+---
+
+## 📁 Estrutura
+
+```
+devbook/
+├── index.html              # entrada do curso (SPA)
+├── landing.html            # landing page de vendas
+├── package.json            # scripts (start / test)
+├── sw.js                   # service worker (offline)
+├── server.js               # servidor de dev sem dependências
+│
+├── assets/
+│   ├── icon.svg            # ícone do app
+│   └── og-cover.svg        # capa para redes sociais
+│
+├── css/
+│   ├── styles.css          # design system do curso (temas claro/escuro)
+│   └── landing.css         # layout da landing page
+│
+├── js/
+│   ├── content/            # 📚 DADOS — edite aqui para mudar conteúdo
+│   │   ├── curriculum.js           # capítulos 1 a 11
+│   │   ├── badges.js               # conquistas (badges)
+│   │   ├── curriculum-advanced.js  # capítulos 12 a 15
+│   │   ├── tracks.js               # 3 trilhas de carreira
+│   │   ├── projects.js             # 3 projetos integradores
+│   │   ├── challenges.js           # 6 desafios de código
+│   │   └── certificate.js          # regras do certificado
+│   │
+│   └── modules/            # ⚙️ LÓGICA — raramente precisa editar
+│       ├── progress.js             # XP, níveis, streak, Leitner, projetos, certificado
+│       ├── playground.js           # editor + preview + console
+│       ├── challenges.js           # sandbox de validação dos desafios
+│       ├── labs.js                 # rendering de trilhas/projetos/desafios + certificado
+│       ├── palette.js              # busca rápida (Ctrl+K)
+│       ├── flashcards.js           # revisão espaçada
+│       └── app.js                  # roteamento, renderização, tema, PWA
+│
+└── test/
+    └── run.js              # suíte de testes (100 testes)
+```
+
+> **A regra da pasta:** `js/content/` é o que você **edita** para mudar o curso.
+> `js/modules/` é a **máquina**. Se não for bug, não mexe.
+
+---
 
 ## ▶️ Como rodar
 
 ```bash
-node server.js 8080     # → http://localhost:8080
-# ou
-python -m http.server 8080
+npm start          # → http://localhost:8080
+npm test           # roda a suíte de testes
 ```
 
-> O `server.js` envia `Cache-Control: no-store` — ideal para desenvolvimento.
+Sem npm? Funciona igual:
 
-## 🧱 Estrutura
-
-```
-devbook/
-├── index.html          # SPA única (layout, modais, PWA bar)
-├── manifest.json       # manifest do PWA
-├── sw.js               # service worker (offline)
-├── server.js           # servidor de dev sem dependências
-├── css/styles.css      # design system completo (temas dark/light)
-├── js/
-│   ├── data.js         # currículo: capítulos, quizzes, flashcards, badges
-│   ├── progress.js     # XP, níveis, streak, Leitner, conquistas
-│   ├── playground.js   # editor + preview + console
-│   ├── flashcards.js   # modal de revisão espaçada
-│   └── app.js          # roteamento por hash, renderização, busca, tema
-└── assets/icon.svg     # ícone do app
+```bash
+node server.js 8080
+node test/run.js
 ```
 
-## ➕ Como adicionar um capítulo
-
-Edite `js/data.js` e acrescente um objeto em `CURRICULUM` com `id`, `part`, `title`, `sections`, `playground`, `quiz` e `flashcards`. O sumário, a home, o progresso e os flashcards se atualizam sozinhos.
+O `server.js` usa só `http`/`fs`/`path` do Node, manda `Cache-Control: no-store` e bloqueia path traversal.
 
 ---
 
-🔗 Repositório completo (Guia de História + DevBook): [guia-docente-historia-e-tecnologia](https://github.com/marcelooliveira8052668-cyber/guia-docente-historia-e-tecnologia)
+## 🎯 O que tem dentro do curso
+
+### 15 capítulos em 6 partes
+
+| Parte | Conteúdo |
+|-------|----------|
+| **1. Fundamentos da Web** | HTML semântico · CSS (Box Model, Flexbox, Grid) · JavaScript · JS Assíncrono · Git/GitHub |
+| **2. Frontend Moderno** | React (JSX, props, state) · Hooks (useEffect, useMemo, custom hooks) |
+| **3. Backend com Node.js** | Runtime, npm, API REST com Express, middlewares |
+| **4. Banco de Dados** | SQL, JOINs, agregações, modelagem |
+| **5. Profissionalização** | TypeScript · Testes (Jest, Supertest, RTL) · Deploy, env vars, CI/CD |
+| **6. Stack Moderna** | Next.js (App Router, Server Components) · Docker · Arquitetura, JWT, bcrypt, validação |
+
+Cada capítulo traz teoria enxuta, tabelas comparativas, callouts de erro comum, **playground com código ao vivo**, **quiz** com feedback explicativo (15 XP por acerto) e **flashcards**.
+
+### 🧭 3 trilhas de carreira
+
+Front-End · Back-End · Full Stack — cada uma com a ordem de estudos, os projetos e as skills que você domina no final.
+
+### 💪 6 desafios com validação automática
+
+Cada desafio roda **casos de teste ocultos** contra o seu código num sandbox isolado (sem rede, sem acesso à página):
+
+| Desafio | Nível | XP |
+|---------|:-----:|---:|
+| FizzBuzz em 4 flavors | Fácil | 30 |
+| Detector de Palíndromos | Fácil | 40 |
+| Gerador de Slug | Médio | 50 |
+| Utilitários de Array | Médio | 60 |
+| Validador de Payload | Médio | 60 |
+| Debounce de Busca | Avançado | 80 |
+
+### 📦 3 projetos de portfólio (300 pontos)
+
+**Dashboard de Vendas** · **API REST de Tarefas** · **Loja Online Full Stack** — cada um com escopo, requisitos pontuados, bônus e um botão que copia o briefing em Markdown pro README do seu GitHub.
+
+### 🎮 Gamificação
+
+XP, 10 níveis, 14 conquistas, streak diário e **certificado de conclusão em PDF** (A4 paisagem).
+
+### 🗺️ Navegação
+
+- **Ctrl+K** ou `/` — busca fuzzy em capítulos, projetos, desafios e comandos
+- **N** — próximo capítulo não lido · **F** — flashcards · **T** — tema · **?** — ajuda
+- Sidebar com progresso por parte, sumário do capítulo com scroll spy, barra de leitura, filtros (todos / não lidos / concluídos)
+
+---
+
+## 💰 Vendendo o curso
+
+A landing page está pronta em `landing.html`. **Antes de publicar, defina:**
+
+1. **O link de checkout** — no fim do arquivo, procure:
+   ```js
+   const CHECKOUT_URL = "#";   // ← cole aqui
+   ```
+   Aceita Hotmart, Kiwify, Mercado Pago, Stripe. Enquanto ficar `"#"`, os botões
+   mostram um aviso em vez de quebrar.
+
+2. **O preço** — procure `.lp-price-old` e `.lp-price-now` no bloco `#preco`.
+
+3. **Seu e-mail de suporte** — `const SUPORTE_EMAIL` no fim do arquivo.
+
+4. **Os depoimentos** — a seção `#depoimentos` tem 3 cards marcados como
+   `Depoimento pendente`, com borda tracejada. **Substitua por relatos reais ou
+   apague a seção inteira.** Não publique depoimento inventado: além do risco
+   jurídico (CDC, art. 37), é a primeira coisa que um comprador desconfiado
+   verifica.
+
+A landing já inclui o que o comprador brasileiro exige: preço visível, formas de
+pagamento (PIX/cartão/boleto), garantia incondicional de 7 dias com referência ao
+art. 49 do CDC, e o preço parcelado.
+
+---
+
+## ✏️ Como adicionar conteúdo
+
+### Capítulo novo
+
+Adicione um objeto em `js/content/curriculum-advanced.js` (ou `curriculum.js`):
+
+```js
+CURRICULUM.push({
+  id: "meu-capitulo",           // único, kebab-case
+  part: "Parte 7 — Minha Área", // agrupa no sumário
+  icon: "🚀", title: "Título", desc: "Resumo curto",
+  level: "medium",              // easy | medium | hard
+  minutes: 30, tags: ["tag1"],
+  lead: "Frase de abertura",
+  sections: [{ h: "Seção", html: "<p>conteúdo…</p>" }],
+  playground: { tabs: ["index.html"], starter: "<!-- código -->" }, // ou null
+  quiz: [{ q: "Pergunta?", opts: ["a","b"], answer: 1, feedback: "Por quê." }],
+  flashcards: [{ q: "Pergunta?", a: "Resposta." }]
+});
+```
+
+### Desafio novo
+
+Em `js/content/challenges.js`:
+
+```js
+{
+  id: "ch-meu-desafio",
+  icon: "🎯", title: "Título",
+  level: "medium", minutes: 15, track: ["frontend"],
+  prompt: "Implemente <code>minhaFuncao()</code> …",
+  hint: "Use <code>reduce</code> …",
+  starter: "// código inicial do aluno",
+  validate: "if (typeof minhaFuncao !== 'function') throw new Error('…'); …",
+  xp: 60
+}
+```
+
+> ⚠️ **Regra importante:** o `validate` **não pode definir** a função que o aluno
+> precisa criar — se definir, ele passa sem escrever nada. Há um teste que
+> detecta isso automaticamente.
+
+### Projeto / Trilha / Conquista
+
+- `js/content/projects.js` — adiciona ao array `PROJECTS`
+- `js/content/tracks.js` — adiciona ao array `TRACKS`
+- `js/content/badges.js` — adiciona ao array `BADGES`
+
+Depois de mexer em qualquer conteúdo, rode `npm test`: ele valida IDs únicos,
+campos obrigatórios, referências quebradas e caracteres estranhos.
+
+---
+
+## 🧪 Testes
+
+```bash
+npm test
+```
+
+**100 testes, zero dependências.** Cobrem:
+
+- Integridade dos dados (IDs únicos, campos obrigatórios, `answer` no range, referências válidas)
+- Suítes de validação dos desafios rodando soluções **certas e erradas**
+- XP, níveis, Leitner, projetos, certificado, reset, persistência e migração de estado
+- Segurança do sandbox (nunca `allow-same-origin`)
+- Acessibilidade, ordem dos scripts e presença no cache do service worker
+- Estrutura da landing page (incluindo um teste que **impede publicar depoimentos fictícios**)
+
+### Adicionando um teste
+
+Abra `test/run.js` e use os helpers existentes:
+
+```js
+it("minha regra de negócio", () => {
+  const antes = Progress.state.xp;
+  Progress.completeChapter("testes");
+  assert.strictEqual(Progress.state.xp, antes + 50);
+});
+```
+
+Os testes rodam o código real do app num `vm` isolado, com `localStorage` falso.
+
+---
+
+## 🎨 Tema e cores
+
+Paleta **Grafite** (neutra), com tema claro como padrão. Todas as cores passam por
+custom properties — trocar a identidade visual inteira é editar dois blocos:
+
+```css
+[data-theme="light"] { --primary: #3d4557; --bg: #f6f7f9; }
+[data-theme="dark"]  { --primary: #c3c9d6; --bg: #14161c; }
+```
+
+Se mudar a paleta, atualize também `meta[name="theme-color"]` no `index.html` e
+`landing.html`, e `background_color`/`theme_color` no `manifest.json`.
+
+---
+
+## 📱 Offline
+
+O service worker usa **rede primeiro** para os arquivos do app (não há build nem
+hash nos nomes, então servir cache antigo depois de uma atualização confunde o
+aluno) e guarda tudo em cache para uso offline. Externos (Google Fonts, unpkg
+dos demos) usam cache primeiro.
+
+Ao publicar uma versão nova, suba o nome do cache em `sw.js`:
+
+```js
+const CACHE = "devbook-v4";   // ← incremente a cada publicação
+```
+
+---
+
+🔗 Repositório completo: [guia-docente-historia-e-tecnologia](https://github.com/marcelooliveira8052668-cyber/guia-docente-historia-e-tecnologia)
