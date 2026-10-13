@@ -25,6 +25,7 @@ const ASSETS = [
 
   // Módulos da aplicação
   "./js/modules/progress.js",
+  "./js/modules/gate.js",
   "./js/modules/playground.js",
   "./js/modules/challenges.js",
   "./js/modules/labs.js",

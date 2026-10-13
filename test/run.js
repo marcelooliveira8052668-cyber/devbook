@@ -1070,7 +1070,7 @@ async function runAll() {
     const html = read("index.html");
     const posOf = s => html.indexOf(s);
     const MODULES = [
-      "progress.js", "playground.js", "challenges.js",
+      "progress.js", "gate.js", "playground.js", "challenges.js",
       "labs.js", "palette.js", "flashcards.js", "app.js"
     ];
 
@@ -1245,6 +1245,66 @@ async function runAll() {
         const m = html.match(re);
         assert.ok(!m, `landing usa urgência sem lastro: "${m ? m[0] : ""}"`);
       });
+    });
+  });
+
+  /* ─── TRAVA DE CONTEÚDO ─── */
+  describe("🔒 Trava de acesso (Gate)", () => {
+    const src = read("js/modules/gate.js");
+
+    it("gate.js está carregado antes do app.js", () => {
+      const html = read("index.html");
+      assert.ok(html.indexOf("js/modules/gate.js") !== -1, "gate.js não está no index.html");
+      assert.ok(html.indexOf("js/modules/gate.js") < html.indexOf("js/modules/app.js"),
+        "gate.js deve carregar antes de app.js");
+    });
+
+    it("o index.html tem o container da tela de acesso", () => {
+      const html = read("index.html");
+      assert.ok(html.includes('id="gateScreen"'), "falta o elemento #gateScreen");
+      assert.ok(html.includes('role="dialog"'), "a tela de acesso precisa ser acessível");
+    });
+
+    it("o sw.js cacheia o gate.js", () => {
+      assert.ok(read("sw.js").includes("./js/modules/gate.js"),
+        "sw.js não cacheia gate.js — a trava quebraria offline");
+    });
+
+    it("avisa que é trava de software, não segurança real", () => {
+      assert.ok(/trancamento de software|trava de software/i.test(src),
+        "o gate deve avisar que não é segurança de verdade");
+      assert.ok(/DevTools|leitor/i.test(src),
+        "o gate deve explicar como o conteúdo é acessível de outro jeito");
+      assert.ok(/aviso:/.test(src),
+        "faltou o aviso dentro de CONFIG, onde o programador realmente vê");
+    });
+
+    it("a aula grátis existe por padrão (1 capítulo liberado)", () => {
+      assert.ok(/freeChapters:\s*\d+/.test(src), "falta CONFIG.freeChapters");
+      assert.ok(/freeChapters:\s*[1-9]/.test(src),
+        "nenhum capítulo liberado de graça — a landing promete aula grátis");
+    });
+
+    it("app.js consulta o gate antes de renderizar", () => {
+      const app = read("js/modules/app.js");
+      assert.ok(/isBlocked\(/.test(app), "app.js não verifica se a rota está bloqueada");
+      assert.ok(/Gate\.render\(/.test(app), "app.js não chama Gate.render()");
+      /* o render do capítulo tem que vir DEPOIS da verificação */
+      assert.ok(app.indexOf("isBlocked(r)") < app.indexOf("renderChapter"),
+        "a checagem da trava precisa vir antes de renderizar o capítulo");
+    });
+
+    it("desbloqueio dispara redesenho da rota", () => {
+      const app = read("js/modules/app.js");
+      assert.ok(app.includes("devbook:unlocked"),
+        "falta o evento que redesenha a tela depois do desbloqueio");
+      assert.ok(/Gate\.init\(\)/.test(app), "app.js não inicializa o gate no boot");
+    });
+
+    it("nenhum caminho privado some da navegação", () => {
+      const app = read("js/modules/app.js");
+      /* isChapterFree precisa existir para a aula grátis continuar acessível */
+      assert.ok(app.includes("Gate.release()"), "app.js não libera a tela após desbloquear");
     });
   });
 

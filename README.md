@@ -119,6 +119,44 @@ XP, 10 níveis, 14 conquistas, streak diário e **certificado de conclusão em P
 
 ---
 
+## 🔒 Vendendo: controle de acesso
+
+O `js/modules/gate.js` trava o conteúdo atrás de uma tela de código. Para ligar,
+edite o bloco `CONFIG`:
+
+```js
+const CONFIG = {
+  enabled: true,          // ← liga a trava
+  freeChapters: 1,        // 1 = o capítulo 1 vira a "aula grátis" da landing
+  freeSections: [],       // ex.: ["trilhas", "certificado"]
+  codes: [
+    "SEU-CODIGO-1",
+    "SEU-CODIGO-2"
+  ]
+};
+```
+
+Gere códigos longos e aleatórios (ex.: `DEV-7K2M-9QX4`). Não use
+`devbook2024` — é o primeiro que alguém tenta.
+
+### ⚠️ Isto não é segurança
+
+O conteúdo do curso viaja em arquivos `.js` que o navegador baixa. **Quem abrir o
+DevTools lê o texto mesmo com a tela de bloqueio na frente.**
+
+O que a trava resolve: o link não se espalha sozinho, e o comprador não bate na
+porta. O que ela **não** resolve: alguém decidido de copiar.
+
+Para proteção de verdade, o conteúdo não pode estar num repositório público:
+
+| Opção | Como funciona |
+|---|---|
+| **Hotmart / Kiwify** (recomendado) | Você sobe o conteúdo na área de membros. A plataforma resolve login, pagamento, senha, e-mail e entrega |
+| **Repo privado** | Converte o `devbook` em privado e envia o link por e-mail após a compra |
+| **Storage privado** | Conteúdo em S3/Supabase com URL assinada, carregado via `fetch` autenticado |
+
+---
+
 ## 💰 Vendendo o curso
 
 A landing page está pronta em `landing.html`. **Antes de publicar, defina:**

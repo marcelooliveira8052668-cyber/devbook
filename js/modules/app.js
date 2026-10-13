@@ -59,6 +59,19 @@
     const r = currentRoute();
     stopOutlineSpy();
 
+    /* Trava de acesso: capítulo/seção bloqueado mostra a tela de código */
+    if (isBlocked(r)) {
+      Gate.render(r.type === "chapter" ? { title: byId(r.id) && byId(r.id).title } : null);
+      renderTOC();
+      updateTotalProgress();
+      updateQuickNav(null);
+      hideBehindGate();
+      return;
+    }
+
+    Gate.release();
+    unhideShell();
+
     if (r.type === "chapter" && byId(r.id)) renderChapter(byId(r.id));
     else if (r.type === "section") renderSection(r.id);
     else if (r.type === "notfound") renderNotFound(r.id);
@@ -76,6 +89,39 @@
 
     if (window.scrollTo) window.scrollTo({ top: 0, behavior: "instant" });
   }
+
+  /* A rota pede conteúdo bloqueado? */
+  function isBlocked(r) {
+    if (Gate.isOpen()) return false;
+    if (r.type === "chapter") {
+      if (!byId(r.id)) return false;              // rota inválida: deixa o 404 cuidar
+      return !Gate.isChapterFree(r.id);
+    }
+    if (r.type === "section") return !Gate.isSectionFree(r.id);
+    return false;                                  // home e 404 são sempre públicos
+  }
+
+  /* Esconde o conteúdo atrás da tela de acesso */
+  function hideBehindGate() {
+    const shell = document.querySelector(".shell");
+    if (shell) shell.classList.add("blurred");
+    if (chapterNav) chapterNav.classList.add("hidden");
+    $("quickNav").classList.add("hidden");
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    maxScrollCache = Math.max(0, max);
+    updateReadBar();
+  }
+
+  function unhideShell() {
+    const shell = document.querySelector(".shell");
+    if (shell) shell.classList.remove("blurred");
+  }
+
+  /* Quando o aluno digita o código certo, redesenha */
+  window.addEventListener("devbook:unlocked", () => {
+    unhideShell();
+    route();
+  });
 
   /* ═══════════ TOC — SUMÁRIO LATERAL ═══════════ */
   let searchQuery = "";
@@ -907,6 +953,7 @@
   });
 
   /* ═══════════ BOOT ═══════════ */
+  Gate.init();
   Progress.renderProfile();
   Progress.checkBadges();
   route();
