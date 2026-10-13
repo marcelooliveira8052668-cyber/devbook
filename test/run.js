@@ -1200,6 +1200,52 @@ async function runAll() {
       const m = html.match(/[\u0400-\u04FF\u3000-\u30FF\u4E00-\u9FFF\uAC00-\uD7AF]/);
       assert.ok(!m, `caractere não-latino na landing: "${m ? m[0] : ""}"`);
     });
+
+    it("os preços do bloco são coerentes entre si", () => {
+      const brl = s => parseFloat(String(s).replace(/\./g, "").replace(",", "."));
+
+      const preco = html.match(/class="lp-price-now"><sup>R\$<\/sup>\s*([\d.,]+)/);
+      assert.ok(preco, "não achei o preço em .lp-price-now");
+      const valor = brl(preco[1]);
+      assert.ok(valor > 0, `preço inválido: ${preco[1]}`);
+
+      /* parcelamento: 12x não pode passar do preço total */
+      const parc = html.match(/12x de R\$\s*([\d.,]+)/);
+      assert.ok(parc, "não achei o parcelamento");
+      const parcela = brl(parc[1]);
+      assert.ok(parcela * 12 <= valor + 0.01,
+        `12x R$ ${parc[1]} soma R$ ${(parcela * 12).toFixed(2)}, mais que o preço R$ ${valor}`);
+
+      /* desconto do PIX tem que ser realmente menor */
+      const pix = html.match(/no PIX: <b>R\$\s*([\d.,]+)/);
+      assert.ok(pix, "não achei o preço do PIX");
+      const pixValor = brl(pix[1]);
+      assert.ok(pixValor < valor,
+        `PIX (R$ ${pix[1]}) não é menor que o preço (R$ ${valor})`);
+    });
+
+    it("NÃO usa preço 'de' que nunca existiu", () => {
+      /* "De R$ X" quando o produto nunca foi vendido por X é prática abusiva
+         (CDC art. 6º III) e queima a confiança de quem pesquisa preço. */
+      const achado = html.match(/De R\$\s*([\d.,]+)/);
+      assert.ok(!achado,
+        `landing usa "De R$ ${achado ? achado[1] : ""}" como preço anterior — ` +
+        `só use se você realmente vendeu por esse valor`);
+    });
+
+    it("não inventa urgência", () => {
+      /* Escassez sem lastro é publicidade enganosa (CDC art. 37). */
+      [
+        /vagas?\s+limitadas?/i,
+        /[úu]ltimas?\s+\d+\s+vagas/i,
+        /termina\s+(em|hoje|amanh)/i,
+        /acaba\s+(em|hoje|amanh)/i,
+        /oferta\s+encerrando/i
+      ].forEach(re => {
+        const m = html.match(re);
+        assert.ok(!m, `landing usa urgência sem lastro: "${m ? m[0] : ""}"`);
+      });
+    });
   });
 
   /* ─── PROGRESSÃO / LEVELS ─── */
